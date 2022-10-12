@@ -1,17 +1,18 @@
 import React, {useEffect, useState} from 'react';
-import {Alert, Image, StyleSheet, Text, View} from 'react-native';
+import {Image, StyleSheet, Text, View} from 'react-native';
 import {fetch} from 'react-native-ssl-pinning';
 
 const SslPinning: React.FC = () => {
-  const [user, setUser] = useState<any>();
+  const [show, setShow] = useState<any>();
+  const [hasError, setHasError] = useState<boolean>(false);
 
   useEffect(() => {
-    fetch('https://api.github.com/users/ismaelsousa', {
+    fetch('https://api.tvmaze.com/shows/526', {
       method: 'GET',
       pkPinning: true,
       // disableAllSecurity: true,
       sslPinning: {
-        certs: ['sha256/r/mIkG3eEpVdm+u/ko/cwxzOMo1bk4TyHIlByibiA5E='],
+        certs: ['sha256/c/0nAAuHA5w68X9XBR7OcxMVtuBYAPl9QRcDFgm6+QE='],
       },
       headers: {
         Accept: 'application/json; charset=utf-8',
@@ -19,19 +20,21 @@ const SslPinning: React.FC = () => {
         e_platform: 'mobile',
       },
     })
-      .then(async response => setUser(await response.json()))
-      .catch(() => Alert.alert('Error', 'Error fetching user'));
+      .then(async response => setShow(await response.json()))
+      .catch(() => {
+        setHasError(true);
+      });
   }, []);
 
-  // openssl s_client -servername api.github.com -connect api.github.com:443 | openssl x509 -pubkey -noout | openssl rsa -pubin -outform der | openssl dgst -sha256 -binary | openssl enc -base64
-
-  //openssl s_client -servername api.github.com -connect api.github.com:443 </dev/null | sed -n -e '/-.BEGIN/,/-.END/ p' > mycert.pem
-  //openssl x509 -in mycert.pem -outform der -out mycert.cer
   return (
     <View style={style.container}>
-      {user && <Image style={style.img} source={{uri: user.avatar_url}} />}
-      {user && <Text>{user.name}</Text>}
-      {!user && <Text>Loading...</Text>}
+      {show && <Image style={style.img} source={{uri: show.image.medium}} />}
+      {show && <Text style={style.text}>{show.name}</Text>}
+      {!show && (
+        <Text style={style.text}>
+          {hasError ? 'Man-in-the-middle' : 'Loading...'}
+        </Text>
+      )}
     </View>
   );
 };
@@ -41,13 +44,18 @@ export default SslPinning;
 
 const style = StyleSheet.create({
   container: {
+    backgroundColor: 'rgba(0,0,0,0.9)',
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
   img: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
+    width: 200,
+    height: 300,
+    borderRadius: 10,
+  },
+  text: {
+    color: 'gray',
+    fontSize: 24,
   },
 });
